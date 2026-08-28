@@ -1438,6 +1438,9 @@ TEST_F(MasterServiceHATest, RemountRestoresCachelibMemoryReplica) {
     object.metadata.replicas.front()
         .get_memory_descriptor()
         .buffer_descriptor.buffer_address_ = kDefaultSegmentBase;
+    object.metadata.replicas.front()
+        .get_memory_descriptor()
+        .buffer_descriptor.protocol_ = "rdma";
     ASSERT_TRUE(service
                     .RestoreFromStandbySnapshot(
                         {object}, 7, {MakeStandbyMemorySegment(endpoint)})
@@ -1461,6 +1464,11 @@ TEST_F(MasterServiceHATest, RemountRestoresCachelibMemoryReplica) {
     ASSERT_TRUE(batch_after[0].has_value());
     EXPECT_FALSE(
         HasInvalidMemoryHandleForTesting(service, kDefaultTenant, key));
+    EXPECT_EQ(batch_after[0]
+                  ->replicas.front()
+                  .get_memory_descriptor()
+                  .buffer_descriptor.protocol_,
+              "rdma");
     EXPECT_EQ(SegmentAllocatedSizeForTesting(service, endpoint), 64);
     EXPECT_EQ(MasterMetricManager::instance().get_allocated_mem_size() -
                   metric_before,
